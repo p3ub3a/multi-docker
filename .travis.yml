@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t pbodea/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true pbodea/react-test npm test
+
+after_success:
+  - docker build -t pbodea/multi-client ./client
+  - docker build -t pbodea/multi-nginx ./nginx
+  - docker build -t pbodea/multi-server ./server
+  - docker build -t pbodea/multi-worker ./worker
+  #Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take those images and push them to docker hub
+  - docker push pbodea/multi-client
+  - docker push pbodea/multi-nginx
+  - docker push pbodea/multi-server
+  - docker push pbodea/multi-worker
